@@ -1,13 +1,13 @@
+#-*- coding: utf-8 -*-
 try:
+    import os
+    import math
     import PIL
     import PIL.Image as PILimage
     from PIL import ImageDraw, ImageFont, ImageEnhance
     from PIL.ExifTags import TAGS, GPSTAGS
 except ImportError as err:
     exit(err)
-
-path = 'images/'
-filename = 'img.jpg'
 
 class Worker(object):
     def __init__(self, img):
@@ -41,6 +41,16 @@ class Worker(object):
 
         return d + (m / 60.0) + (s / 3600.0)
 
+    @staticmethod
+    def convert_to_DegMinSec(value):
+        deg = math.floor(int(value))
+        value = abs(60*(value - deg))
+        min = math.floor(int(value))
+        value = 60*(value - min)
+        sec = math.floor(value)
+        output = str(int(deg)) + '° ' + str(int(min)) + '\' ' + str(sec) + '\"'
+        return output
+
     def get_exif_data(self):
         """Returns a dictionary from the exif data of an PIL Image item. Also
         converts the GPS Tags"""
@@ -73,8 +83,8 @@ class Worker(object):
                 lat = self.convert_to_degress(gps_latitude)
                 if gps_latitude_ref != "N":
                     lat = 0 - lat
-                lat = str("{lat:.{5}f}")
-                return lat
+                #lat = str("{lat:.{5}f}")
+                return self.convert_to_DegMinSec(lat)
         else:
             return None
 
@@ -90,8 +100,8 @@ class Worker(object):
                 lon = self.convert_to_degress(gps_longitude)
                 if gps_longitude_ref != "E":
                 	lon = 0 - lon
-                lon = str("{lon:.{5}f}")
-                return lon
+                #lon = str("{lon:.{5}f}")
+                return self.convert_to_DegMinSec(lon)
         else:
             return None
 
@@ -105,16 +115,31 @@ def main():
     date = image.date
     print(date)
 
+directory = 'images/'
+
 if __name__ == '__main__':
     try:
-		img = PILimage.open(path + filename)
-		image = Worker(img)
-		lat = image.lat
-		lon = image.lon
-		date = image.date
-		print(date)
-		print(lat)
-		print(lon)
+        for filename in os.listdir(directory):
+            if filename.endswith(".jpg") or filename.endswith(".png"):
+                img = PILimage.open(directory + filename)
+                image = Worker(img)
+                lat = image.lat
+                lon = image.lon
+                date = image.date
+                print("Filename:  " + filename)
+                print("Date:      " + date)
+                if (lon != None and lat != None):
+                    print("Latitiude: " + lat)
+                    print("Longitude: " + lon)
+                else:
+                    print("Latitiude: Not Found")
+                    print("Longitude: Not Found")
+                    
+                print
+                continue
+            else:
+                continue
+
 
     except Exception as e:
         print(e)
